@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <pthread.h>
-#include <mqueue.h>
+#include <sys/socket.h>
 #include <string.h>
 #include <stdlib.h>
 #include "comunicacion.h"
@@ -154,24 +154,52 @@ void cumplir_pet (void* pet){
 
 int main(){
 
-    mqd_t cola_servidor;
+
+    /*mqd_t cola_servidor;
     struct mq_attr qattr_servidor;
     qattr_servidor.mq_maxmsg = 10;
-    qattr_servidor.mq_msgsize = sizeof(Request);
+    qattr_servidor.mq_msgsize = sizeof(Request);*/
 
 
     // Mensaje recibido del cliente
-    Request peticion;
+    //Request peticion;
 
     pthread_t thid;
     pthread_attr_t th_attr; 
 
+    /*
     // Crear cola del servidor
     if((cola_servidor = mq_open("/COLA_SERVIDOR", O_CREAT|O_RDONLY, 0700, &qattr_servidor)) == -1){
         perror("[SERVIDOR] No se puede crear la cola de servidor\n");
         return -1; 
+    }*/
+    int sockfd;
+    struct sockaddr_in serv_addr, client_addr;
+    bzero((char *)&serv_addr, sizeof(serv_addr));
+    serv_addr.sin_family = AF_INET;
+    // Se establece la IP del servidor a localhost
+    serv_addr.sin_addr.s_addr = inet_addr("localhost");
+    serv_addr.sin_port = htons(8080);
+
+
+
+    if (sockfd = socket(AF_INET, SOCK_STREAM, 0)==-1) {
+        perror("[SERVIDOR][ERROR] No se pudo crear socket de recepción de peticiones\n");
+        return -1;
     }
 
+    
+
+    if (bind(sockfd, (const struct sockaddr *)&serv_addr, sizeof(serv_addr)) == -1){
+        perror("[SERVIDOR][ERROR] No se pudo enlazar el socket de recepción de peticiones\n");
+        return -1;
+    }
+
+    if (listen(sockfd, SOMAXCONN) == -1){
+        perror("[SERVIDOR][ERROR] No se pudo poner el socket en modo escucha\n");
+        return -1;
+    }
+    
     pthread_attr_init(&th_attr);
     pthread_attr_setdetachstate(&th_attr,PTHREAD_CREATE_DETACHED);
     
@@ -179,8 +207,9 @@ int main(){
     while(1){
 
         // Recepcion de peticion
-        if(mq_receive(cola_servidor, (char *) &peticion, sizeof(Request), 0) == -1)
-            break;
+        /*if(mq_receive(cola_servidor, (char *) &peticion, sizeof(Request), 0) == -1)
+            break;*/
+        accept(sockfd)
 
         // Crea un hilo por peticion
         if(pthread_create(&thid, &th_attr, (void*) &cumplir_pet, (void *) &peticion) == -1){
@@ -195,14 +224,20 @@ int main(){
         }
 
     // Cerrar cola del servidor
-    if (mq_close(cola_servidor) == -1){
+    /*if (mq_close(cola_servidor) == -1){
         perror("[SERVIDOR] Cola del servidor no pudo cerrarse\n");
         return -1;
     }
 
+
     // Desvincular cola del servidor
     if (mq_unlink("/COLA_SERVIDOR") == -1){
         perror("[SERVIDOR] Cola cliente no pudo desvincularse\n");
+        return -1;
+    }*/
+
+    if (close(sockfd) == -1){
+        perror("[SERVIDOR][ERROR] No se pudo cerrar el socket de recepción de peticiones\n");
         return -1;
     }
 
