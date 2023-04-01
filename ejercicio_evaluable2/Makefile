@@ -6,8 +6,8 @@ OBJS_CLIENT=cliente.o
 LDLIBS = -lpthread -lrt
 
 all: libclaves.so $(OBJS_SERVER) $(OBJS_CLIENT) $(OBJS_RST)
-	$(CC) $(CFLAGS) -o servidor_ejev1 $(OBJS_SERVER) $(LDLIBS)
-	$(CC) $(CFLAGS) -o cliente_ejev1 $(OBJS_CLIENT) -L. -lclaves
+	$(CC) $(CFLAGS) -o servidor_ejev2 $(OBJS_SERVER) $(LDLIBS)
+	$(CC) $(CFLAGS) -o cliente_ejev2 $(OBJS_CLIENT) -L. -lclaves
 
 
 libimplserv.a: impl_serv.o
@@ -20,4 +20,4 @@ libclaves.so: claves.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJS_SERVER) $(OBJS_CLIENT) libclaves.so impl_serv.o servidor_ejev1 cliente_ejev1
+	rm -f $(OBJS_SERVER) $(OBJS_CLIENT) libclaves.so impl_serv.o servidor_ejev2 cliente_ejev2

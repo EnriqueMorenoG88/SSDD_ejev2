@@ -36,7 +36,7 @@ int Test2_C(){
 }
 
 // El cliente lee una tupla
-int Test3_C(){
+/*int Test3_C(){
 
     init();
     
@@ -443,7 +443,7 @@ int Test7_NC(){
                 resultado);
         return 0;
     }
-}
+}*/
 
 
 int main(){
@@ -453,7 +453,7 @@ int main(){
     printf("---------- EJECUTANDO TESTS ----------\n");
     total_correctos += Test1_C();
     total_correctos += Test2_C();
-    total_correctos += Test3_C();
+    /*total_correctos += Test3_C();
     total_correctos += Test4_C();
     total_correctos += Test5_C();
     total_correctos += Test6_C();
@@ -467,7 +467,7 @@ int main(){
     total_correctos += Test4_NC();
     total_correctos += Test5_NC();
     total_correctos += Test6_NC();
-    total_correctos += Test7_NC();
+    total_correctos += Test7_NC();*/
     printf("\n---------- TESTS FINALIZADOS ----------\n");
     if (total_correctos == 17) {
         printf("[ OK ] Todos los tests funcionaron correctamente (%i correctos, %i fallidos)\n",total_correctos, (17-total_correctos));

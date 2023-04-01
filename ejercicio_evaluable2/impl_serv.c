@@ -93,7 +93,7 @@ int set_value_serv(int key, char *value1, int value2, double value3){
 
 
 // Obtención de los valores asociados a la clave proporcionada
-int get_value_serv(int key, char* value1, int* value2, double* value3){
+int get_value_serv(int key, char* value1, int* value2, int64_t* value3){
 
     // Obtiene nombre completo del fichero
     char tuple_file [1024];
