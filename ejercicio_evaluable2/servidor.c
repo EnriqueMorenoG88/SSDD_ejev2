@@ -48,11 +48,10 @@ void cumplir_pet (void* pet){
             respuesta.status = init_serv();
             pthread_mutex_unlock(&tuples_mutex);
             respuesta.status = ntohl(respuesta.status);
+
             // Se envia la respuesta al cliente
             if (sendMessage(peticion.sock_client, (char*) &respuesta.status, sizeof(int32_t)) == -1)
                 perror("[SERVIDOR][ERROR] No se pudo enviar la respuesta al cliente\n");
-            // Imprime el valor a enviar
-
             break;
 
         case 's':  // Operacion set_value()
@@ -62,12 +61,11 @@ void cumplir_pet (void* pet){
             respuesta.status = set_value_serv(peticion.content.key, peticion.content.value1, 
                                                 peticion.content.value2, peticion.content.value3);
             pthread_mutex_unlock(&tuples_mutex);
+
             // Se envia la respuesta al cliente
             respuesta.status = ntohl(respuesta.status);
             if (sendMessage(peticion.sock_client, (char*) &respuesta.status, sizeof(int32_t)) == -1)
                 perror("[SERVIDOR][ERROR] No se pudo enviar la respuesta al cliente\n");
-            // Imprime el valor a enviar
-
             break;
 
         case 'g': // Operacion get_value()
@@ -77,27 +75,27 @@ void cumplir_pet (void* pet){
                 respuesta.status = get_value_serv(peticion.content.key, respuesta.content.value1, 
                                                     &respuesta.content.value2, &respuesta.content.value3);
                 pthread_mutex_unlock(&tuples_mutex);
+
                 // Se envia la respuesta al cliente
                 int status = ntohl(respuesta.status);
                 if (sendMessage(peticion.sock_client, (char*) &status, sizeof(int32_t)) == -1)
                     perror("[SERVIDOR][ERROR] No se pudo enviar la respuesta al cliente\n");
 
-                // Imprime el valor a enviar
+                // En caso de que la operacion se haya realizado correctamente, se envian los valores
                 if (respuesta.status == 0){
 
-                    char value1[256], value3[512];
-                    strcpy(value1, respuesta.content.value1);
+                    char value3[512]; // Buffer para almacenar el valor de value3 como string
+
                     respuesta.content.value2 = htonl(respuesta.content.value2);
                     sprintf(value3, "%f", respuesta.content.value3);
 
-                    if (sendMessage(peticion.sock_client, value1, strlen(value1)+1) == -1)
+                    if (sendMessage(peticion.sock_client, respuesta.content.value1, strlen(respuesta.content.value1)+1) == -1)
                         perror("[SERVIDOR][ERROR] No se pudo enviar la respuesta al cliente (value 1)\n");
                     if (sendMessage(peticion.sock_client, (char*) &respuesta.content.value2, sizeof(int32_t)) == -1)
                         perror("[SERVIDOR][ERROR] No se pudo enviar la respuesta al cliente (value 2)\n");
                     if (sendMessage(peticion.sock_client, value3, strlen(value3)+1) == -1)
                         perror("[SERVIDOR][ERROR] No se pudo enviar la respuesta al cliente (value 3)\n");
                 }
-
                 break;
 
         case 'm':  // Operacion modify_value()
@@ -107,10 +105,11 @@ void cumplir_pet (void* pet){
             respuesta.status = modify_value_serv(peticion.content.key, peticion.content.value1,
                                                 peticion.content.value2, peticion.content.value3);
             pthread_mutex_unlock(&tuples_mutex);
+
+            // Se envia la respuesta al cliente
             respuesta.status = ntohl(respuesta.status);
             if (sendMessage(peticion.sock_client, (char*) &respuesta.status, sizeof(int32_t)) == -1)
                 perror("[SERVIDOR][ERROR] No se pudo enviar la respuesta al cliente\n");
-
             break;
 
         case 'd':  //Operacion delete_key()
@@ -119,6 +118,8 @@ void cumplir_pet (void* pet){
             pthread_mutex_lock(&tuples_mutex);
             respuesta.status = delete_key_serv(peticion.content.key);
             pthread_mutex_unlock(&tuples_mutex);
+
+            // Se envia la respuesta al cliente
             respuesta.status = ntohl(respuesta.status);
             if (sendMessage(peticion.sock_client, (char*) &respuesta.status, sizeof(int32_t)) == -1)
                 perror("[SERVIDOR][ERROR] No se pudo enviar la respuesta al cliente\n");
@@ -130,10 +131,11 @@ void cumplir_pet (void* pet){
             pthread_mutex_lock(&tuples_mutex);
             respuesta.status = exist_serv(peticion.content.key);
             pthread_mutex_unlock(&tuples_mutex);
+
+            // Se envia la respuesta al cliente
             respuesta.status = ntohl(respuesta.status);
             if (sendMessage(peticion.sock_client, (char*) &respuesta.status, sizeof(int32_t)) == -1)
                 perror("[SERVIDOR][ERROR] No se pudo enviar la respuesta al cliente\n");
-
             break;
 
         case 'c':    // Operacion copy_key()
@@ -141,17 +143,18 @@ void cumplir_pet (void* pet){
             pthread_mutex_lock(&tuples_mutex);
             respuesta.status = copy_key_serv(peticion.content.key, peticion.second_key);
             pthread_mutex_unlock(&tuples_mutex);
-            respuesta.status = ntohl(respuesta.status);
 
+            // Se envia la respuesta al cliente
+            respuesta.status = ntohl(respuesta.status);
             if (sendMessage(peticion.sock_client, (char*) &respuesta.status, sizeof(int32_t)) == -1)
-                perror("[SERVIDOR][ERROR] No se pudo enviar la respuesta al cliente\n");
-                
+                perror("[SERVIDOR][ERROR] No se pudo enviar la respuesta al cliente\n");    
             break;
 
         default:
             perror("[SERVIDOR][ERROR] Operacion solicitada no valida\n");
     }
 
+    // Se cierra el socket del cliente
     if (close(peticion.sock_client) == -1){
         perror("[SERVIDOR][ERROR] Socket del cliente no pudo cerrarse\n");
     }
@@ -168,31 +171,47 @@ int main(int argc, char* argv[]){
     pthread_t thid;
     pthread_attr_t th_attr; 
 
-    // Crear cola del servidor
-    
+    // Informacion para el socket del servidor y del cliente
     int sock_serv_fd, sock_client_fd;
     struct sockaddr_in serv_addr, client_addr;
 
+    // Variables para almacenar la operacion y los valores de la tupla recibidas por el cliente
     char op;
     char value1[256], value3[512];
     int32_t key, value2, second_key;
 
+    // Se comprueba que se ha introducido el puerto como argumento
+    if (argc != 2){
+        printf("[SERVIDOR][ERROR] Debe introducir el puerto como argumento\n");
+        return -1;
+    }
+
+    // Se alamcena el puerto introducido como argumento y se comprueba que es valido
     short puerto = (short) atoi(argv[1]);
 
+    if (puerto < 1024 || puerto > 65535){
+        printf("[SERVIDOR][ERROR] El puerto introducido no es valido\n");
+        return -1;
+    }
+
+    // Se crea el socket del servidor
     if ((sock_serv_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         perror("[SERVIDOR][ERROR] No se pudo crear socket de recepción de peticiones\n");
         return -1;
     }
 
+    // Se establece la opcion de reutilizacion de direcciones
     int val = 1;
     setsockopt(sock_serv_fd, SOL_SOCKET, SO_REUSEADDR, (char *) &val, sizeof(int));
+    
+    // Se inicializa la estructura de datos para el socket del servidor
     socklen_t client_addr_len = sizeof(client_addr);
     bzero((char *)&serv_addr, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
-    // Se establece la IP del servidor a localhost
-    serv_addr.sin_addr.s_addr = INADDR_ANY;;
+    serv_addr.sin_addr.s_addr = INADDR_ANY;
     serv_addr.sin_port = htons(puerto);
 
+    // Se enlaza el socket del servidor con la direccion y puerto y se procede a ponerlo en modo escucha
     if (bind(sock_serv_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) == -1){
         perror("[SERVIDOR][ERROR] No se pudo enlazar el socket de recepción de peticiones\n");
         return -1;
@@ -203,18 +222,20 @@ int main(int argc, char* argv[]){
         return -1;
     }
     
+    // Se inicializa el mutex para el directorio "tuples" y sus ficheros
     pthread_attr_init(&th_attr);
     pthread_attr_setdetachstate(&th_attr,PTHREAD_CREATE_DETACHED);
     
     // Recepcion y atencion continua de peticiones
     while(1){
 
-        // Recepcion de peticion
+        // Se acepta la conexion del cliente
         if ((sock_client_fd = accept(sock_serv_fd, (struct sockaddr*) &client_addr, &client_addr_len)) == -1){
             perror("[SERVIDOR][ERROR] No se pudo aceptar la conexión del cliente\n");
             break;
         }
 
+        // Se recibe la informacion de la peticion del cliente
         if (recvMessage(sock_client_fd, (char*) &op, sizeof(char)) == -1){
             perror("[SERVIDOR][ERROR] No se pudo recibir la petición del cliente (operacion)\n");
             break;
@@ -250,22 +271,18 @@ int main(int argc, char* argv[]){
             }
         }
 
+        // Se almacena la informacion de la peticion en la estructura "peticion"
         peticion.op = op;
-
-        // Almacena la direccion de socket del cliente en la peticion para volver a abrir el socket del cliente desde el hilo
         peticion.sock_client = sock_client_fd;
-
         if (op != 'i')
             peticion.content.key = ntohl(key);
         if (op == 's' || op == 'm'){
             strcpy(peticion.content.value1, value1);
             peticion.content.value2 = ntohl(value2);
             sscanf(value3, "%lf", &peticion.content.value3);
-
         }
-        if (op == 'c'){
+        if (op == 'c')
             peticion.second_key = ntohl(second_key);
-        }
 
         // Crea un hilo por peticion
         if(pthread_create(&thid, &th_attr, (void*) &cumplir_pet, (void *) &peticion) == -1){
@@ -280,12 +297,10 @@ int main(int argc, char* argv[]){
             pthread_mutex_unlock(&mutex_msg);
         }
 
-    // Cerrar cola del servidor
-
+    // Se cierra el socket del servidor
     if (close(sock_serv_fd) == -1){
         perror("[SERVIDOR][ERROR] No se pudo cerrar el socket de recepción de peticiones\n");
         return -1;
     }
-
     return 0;
 }

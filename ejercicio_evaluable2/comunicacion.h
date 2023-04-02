@@ -5,6 +5,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <errno.h>
+
 #define MAX_MSG 10      // Numero maximo de mensajes en cola
 
 // Estructura para tuplas
@@ -29,8 +30,8 @@ typedef struct service{
     Tuple content;
 } Service;
 
-int recvMessage(int socket, char *buffer, int len)
-{
+// Recepcion de mensajes por socket [TOMADO DE EJEMPLO DE CLASE]
+int recvMessage(int socket, char *buffer, int len){
 	int r, l = len;	
 	do {	
 		r = read(socket, buffer, l);
@@ -42,8 +43,8 @@ int recvMessage(int socket, char *buffer, int len)
 	return(0);	/* full length has been receive */
 }
 
-int sendMessage(int socket, char * buffer, int len)
-{
+// Recepcion de mensajes por socket [TOMADO DE EJEMPLO DE CLASE]
+int sendMessage(int socket, char * buffer, int len){
 	int r, l = len;
 	do {	
 		r = write(socket, buffer, l);
@@ -55,6 +56,7 @@ int sendMessage(int socket, char * buffer, int len)
 	return(0);	/* full length has been sent */
 }
 
+// Recepcion de mensajes por socket [TOMADO DE EJEMPLO DE CLASE]
 ssize_t readLine(int fd, void *buffer, size_t n){
 	ssize_t numRead; /* num of bytes fetched by last read() */
 	size_t totRead; /* total bytes read so far */

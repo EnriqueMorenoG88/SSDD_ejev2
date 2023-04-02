@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Exportar la variable de entorno LD_LIBRARY_PATH con el path de la libreria
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)
 
 # Iniciar el ejecutable del servidor en background con el puerto 8080

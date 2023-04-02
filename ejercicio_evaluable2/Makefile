@@ -3,18 +3,15 @@ CFLAGS=-g -Wall
 OBJS_SERVER=servidor.o libimplserv.a
 OBJS_CLIENT=cliente.o 
 
-LDLIBS = -lpthread -lrt
-
 all: libclaves.so $(OBJS_SERVER) $(OBJS_CLIENT) $(OBJS_RST)
-	$(CC) $(CFLAGS) -o servidor_ejev2 $(OBJS_SERVER) $(LDLIBS)
+	$(CC) $(CFLAGS) -o servidor_ejev2 $(OBJS_SERVER) -lpthread
 	$(CC) $(CFLAGS) -o cliente_ejev2 $(OBJS_CLIENT) -L. -lclaves
-
 
 libimplserv.a: impl_serv.o
 	ar rc libimplserv.a impl_serv.o
 
 libclaves.so: claves.c
-	$(CC) $(CFLAGS) -shared -fPIC -o libclaves.so claves.c -lrt
+	$(CC) $(CFLAGS) -shared -fPIC -o libclaves.so claves.c
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
