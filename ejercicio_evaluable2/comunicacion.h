@@ -31,14 +31,12 @@ typedef struct service{
 
 int recvMessage(int socket, char *buffer, int len)
 {
-	int r, l = len;
-		
+	int r, l = len;	
 	do {	
 		r = read(socket, buffer, l);
 		l -= r ;
 		buffer += r;
 	} while ((l>0) && (r>=0));
-	
 	if (r < 0)
 		return (-1);   /* fallo */
 	return(0);	/* full length has been receive */
@@ -47,13 +45,11 @@ int recvMessage(int socket, char *buffer, int len)
 int sendMessage(int socket, char * buffer, int len)
 {
 	int r, l = len;
-		
 	do {	
 		r = write(socket, buffer, l);
 		l -= r;
 		buffer += r;
 	} while ((l>0) && (r>=0));
-	
 	if (r < 0)
 		return (-1);   /* fail */
 	return(0);	/* full length has been sent */
